@@ -1,6 +1,6 @@
 # Must-Gather Scripts for IBM Spectrum Protect for Enterprise Resource Planning – Data Protection for SAP® Oracle 
 
-# sp-client-vmware
+# sp-client-sap-oracle
 ## Overview
 These scripts collect system, network, configuration, logs, server, sap-oracle and performance data for  IBM Spectrum Protect for Enterprise Resource Planning – Data Protection for SAP® Oracle. 
 
