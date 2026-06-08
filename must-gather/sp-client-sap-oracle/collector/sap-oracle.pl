@@ -83,6 +83,34 @@ sub run_command {
     }
 }
 
+sub collect_latest_file {
+    my ($dir, $sid) = @_;
+
+    return unless -d $dir;
+
+    opendir(my $dh, $dir) or return;
+
+    my @files = grep {
+        -f "$dir/$_"
+        && $_ !~ /\.log$/i
+    } readdir($dh);
+
+    closedir($dh);
+
+    return unless @files;
+
+    my @sorted =
+        sort {
+            (stat("$dir/$b"))[9] <=>
+            (stat("$dir/$a"))[9]
+        } @files;
+
+    my $latest = "$dir/$sorted[0]";
+    my $original_filename = "$sorted[0]_$sid";
+
+    collect_file($latest, $original_filename);
+}
+
 # =============================
 # SECTION 1: Detect SAP SID
 # =============================
@@ -267,53 +295,107 @@ foreach my $sid (@sids) {
 print $errfh "\n=== Collecting sbtio.log ===\n" if $verbose;
 
 foreach my $sid (@sids) {
+
     next if $sid eq "XXX";
-    
+
+    my $sid_lc = lc($sid);
+
     my @sbtio_paths = (
+
+        "/oracle/$sid/saptrace/diag/rdbms/$sid_lc/$sid/trace/sbtio.log",
+
+        "/oracle/$sid/saptrace/diag/rdbms/$sid_lc/${sid}_DB/trace/sbtio.log",
+
         "/oracle/$sid/sapbackup/sbtio.log",
-        "/oracle/$sid/sbtio.log",
+
         "/oracle/$sid/saparch/sbtio.log",
+
+        "/oracle/$sid/sbtio.log",
     );
-    
+
+    my $found = 0;
+
     foreach my $log_path (@sbtio_paths) {
+
         if (-e $log_path) {
-            collect_file($log_path, "sbtio.log_${sid}");
+
+            collect_file(
+                $log_path,
+                "sbtio_${sid}.log"
+            );
+
+            $found = 1;
             last;
         }
     }
+
+    $collected_files{"sbtio_${sid}.log"} = "NOT FOUND"
+        unless $found;
 }
 
 # =============================
-# SECTION 9: backint logs and backup files
+# SECTION 9: SAP BRTOOLS Logs
 # =============================
-print $errfh "\n=== Collecting backint logs and backup files ===\n" if $verbose;
+print $errfh "\n=== Collecting SAP BRTOOLS Logs ===\n" if $verbose;
 
 foreach my $sid (@sids) {
+
     next if $sid eq "XXX";
-    
+
+    # ----------------------------------
+    # Standard SAP backup logs
+    # ----------------------------------
+
+    collect_file(
+        "/oracle/$sid/sapbackup/back${sid}.log",
+        "back${sid}.log"
+    );
+
+    collect_file(
+        "/oracle/$sid/sapbackup/recov${sid}.log",
+        "recov${sid}.log"
+    );
+
+    collect_file(
+        "/oracle/$sid/sapbackup/rest${sid}.log",
+        "rest${sid}.log"
+    );
+
+    # ----------------------------------
+    # Latest generated BRTOOLS files
+    # ----------------------------------
+
+    collect_latest_file(
+        "/oracle/$sid/sapbackup",
+        "${sid}"
+    );
+
+    collect_latest_file(
+        "/oracle/$sid/saparch",
+        "${sid}"
+    );
+
+    # ----------------------------------
+    # Existing backint logs
+    # ----------------------------------
+
     my @backup_dirs = (
         "/oracle/$sid/sapbackup",
         "/oracle/$sid/saparch",
     );
-    
+
     foreach my $dir (@backup_dirs) {
+
         next unless -d $dir;
-        
+
         my $dirname = basename($dir);
-        
-        # Collect backint.log
+
         if (-e "$dir/backint.log") {
-            collect_file("$dir/backint.log", "backint.log_${dirname}_${sid}");
-        }
-        
-        # Collect backup files with specific extensions
-        my @extensions = qw(anf aff anr svd rsb);
-        foreach my $ext (@extensions) {
-            my @files = glob("$dir/*.$ext");
-            foreach my $file (@files) {
-                my $filename = basename($file);
-                collect_file($file, "${filename}_${dirname}_${sid}");
-            }
+
+            collect_file(
+                "$dir/backint.log",
+                "backint.log_${dirname}_${sid}"
+            );
         }
     }
 }
