@@ -8,8 +8,6 @@ use lib "$FindBin::Bin/common/modules";
 use utils;
 use File::Spec;
 
-
-
 # ----------------------------------
 # Parameters
 # ----------------------------------
@@ -55,6 +53,7 @@ if ($help) {
         'sp-client-exchange' => 1, 
         'sp-client-domino'   => 1, 
         'sp-client-sap-hana'   => 1,   
+        'sp-client-hsm'   => 1, 
     );
 
     unless (exists $valid_products{$product}) {
@@ -224,6 +223,7 @@ print "Starting must-gather for product: $product\n" if $verbose;
         'sp-client-domino' => "$FindBin::Bin/sp-client-domino/mustgather.pl",
         'sp-client-exchange' => "$FindBin::Bin/sp-client-exchange/mustgather.pl",
         'sp-client-vmware' => "$FindBin::Bin/sp-client-vmware/mustgather.pl",
+        'sp-client-hsm' => "$FindBin::Bin/sp-client-hsm/mustgather.pl",
         # Add more products as developed
     );
 
@@ -276,7 +276,7 @@ sub print_usage {
 Usage: mustgather.pl --product <name> --output-dir <path> --caseno <case_number> --adminid <admin_id> [options]
 
 Mandatory:
-  --product, -p      Product name (sp-client-ba, sp-client-vmware, sp-client-sql, sp-server, sp-client-hyperv, sp-client-oracle, sp-client-exchange, sp-client-domino, sp-client-sap-hana)
+  --product, -p      Product name (sp-client-ba, sp-client-vmware, sp-client-sql, sp-server, sp-client-hyperv, sp-client-oracle, sp-client-exchange, sp-client-domino, sp-client-sap-hana, sp-client-hsm)
   --output-dir, -o   Target folder for collected data
   --caseno, -c       IBM Support Case Number (format: TS followed by 9 digits, e.g., TS020757841)
   --adminid, -id     Storage Protect server admin ID (password prompted securely)
